@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="kaa">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UstaTop PRO</title>
+
+  <style>
+    :root { --bg: #f4f7f6; --card-bg: #ffffff; --text: #2d3436; --primary: #0984e3; --secondary: #636e72; }
+    .dark { --bg: #1e272e; --card-bg: #2f3640; --text: #f5f6fa; --primary: #00a8ff; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); transition: 0.3s; margin: 0; padding: 15px; }
+    .container { max-width: 480px; margin: auto; }
+    .card { background: var(--card-bg); padding: 20px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); margin-top: 15px; text-align: center; position: relative; }
+    button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: none; background: var(--primary); color: white; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+    button:active { transform: scale(0.98); }
+    .btn-outline { background: none; border: 2px solid var(--primary); color: var(--primary); }
+    .btn-back { background: var(--secondary); margin-top: 15px; }
+    .checkbox-group { text-align: left; max-height: 250px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 10px; margin-bottom: 15px; }
+    .checkbox-item { display: flex; align-items: center; padding: 8px 0; border-bottom: 1px solid #eee; }
+    .checkbox-item input { width: 20px; height: 20px; margin-right: 12px; }
+    .badge { display: inline-block; background: #dfe6e9; color: #2d3436; padding: 4px 10px; border-radius: 20px; font-size: 12px; margin: 2px; }
+    .dark .badge { background: #57606f; color: white; }
+    select.lang-select { padding: 8px; border-radius: 8px; border: 1px solid var(--primary); background: var(--card-bg); color: var(--text); }
+    .delete-btn { background: #ff7675; font-size: 12px; padding: 5px; width: auto; margin: 5px 0 0 0; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div style="display: flex; justify-content: space-between; align-items: center;">
+    <button onclick="toggleDark()" style="width: 50px;">🌓</button>
+    <h3 style="margin: 0;">UstaTop PRO</h3>
+    <select class="lang-select" onchange="setLang(this.value)" id="langSelect">
+      <option value="kaa">Qaraqalpaq</option>
+      <option value="uz">O'zbekcha</option>
+      <option value="ru">Русский</option>
+    </select>
+  </div>
+  <div id="app"></div>
+</div>
+
+<script type="module">
+  // FIREBASE JALǴAW
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+  // Sizdiń Firebase mánzilińiz
+  const firebaseConfig = {
+    databaseURL: "https://ustataw-feea0-default-rtdb.firebaseio.com/" 
+  };
+
+  const fbApp = initializeApp(firebaseConfig);
+  const db = getDatabase(fbApp);
+
+  let lang = localStorage.getItem("appLang") || "kaa";
+  let ustalar = [];
+
+  // BAZADAN MAǴLIWMATLARDI ALIW
+  onValue(ref(db, 'ustalar'), (snapshot) => {
+    const data = snapshot.val();
+    if (data) {
+      // ID-leri menen birge júklew (óshiriw ushın kerek)
+      ustalar = Object.keys(data).map(key => ({
+        id: key,
+        ...data[key]
+      }));
+    } else {
+      ustalar = [];
+    }
+    home(); 
+  });
+
+  const kasipler = [
+      "Elektrik", "Santexnik", "Gipsokarton ustası", "Malyar", 
+      "Kafelshik", "Mebelshi", "Kondicioner ustası", 
+      "Suw filtri ustası", "Kir juwıw mashina ustası", 
+      "Shtukaturka (Sıwaq)", "Gaz ustası", "Internet ustası", "Tegislewshi (Styajka)"
+  ];
+
+  const text = {
+    kaa: {
+      who: "Siz kimsiz?", client: "Mijoz (Usta izlew)", worker: "Ustaman (Dizimge jazılıw)",
+      choose: "Kásipti saylań", call: "Qońıraw qılıw", register: "Usta bolıp dizimnen ótiw",
+      save: "Saqlaw", name: "Atıńız hám familiyańız", job: "Kásiplerińiz (bir neshe saylaw múmkin)", 
+      phone: "Telefon nomerińiz", notfound: "Bul kásip boyınsha usta tabılmadı 😕", back: "Arqaǵa",
+      success: "✅ Registraciya tamamlandı!", successDesc: "Raxmet, siz dizimge alındıńız.", home: "Bas betke",
+      delete: "🗑 Óshiriw"
+    },
+    uz: {
+      who: "Siz kimsiz?", client: "Mijoz (Usta izlash)", worker: "Ustaman (Ro'yxatdan o'tish)",
+      choose: "Kasbni tanlang", call: "Qo'ng'iroq qilish", register: "Usta sifatida ro'yxatdan o'tish",
+      save: "Saqlash", name: "Ism va familiyangiz", job: "Kasblaringiz (bir nechta tanlash mumkin)", 
+      phone: "Telefon raqamingiz", notfound: "Usta topilmadi 😕", back: "Orqaga",
+      success: "✅ Ro'yxatdan o'tdingiz!", successDesc: "Rahmat, ma'lumotlaringiz saqlandi.", home: "Bosh sahifa",
+      delete: "🗑 O'chirish"
+    },
+    ru: {
+      who: "Кто вы?", client: "Я клиент (Ищу мастера)", worker: "Я мастер (Регистрация)",
+      choose: "Выберите услугу", call: "Позвонить", register: "Регистрация мастера",
+      save: "Сохранить", name: "Ваше имя и фамилия", job: "Ваши навыки (можно несколько)", 
+      phone: "Номер телефона", notfound: "Мастера по этой специальности не найдены 😕", back: "Назад",
+      success: "✅ Регистрация завершена!", successDesc: "Спасибо, вы успешно добавлены в базу.", home: "На главную",
+      delete: "🗑 Удалить"
+    }
+  };
+
+  window.setLang = (l) => { lang = l; localStorage.setItem("appLang", l); home(); }
+  window.toggleDark = () => { document.body.classList.toggle("dark"); }
+
+  window.home = () => {
+    document.getElementById("app").innerHTML = `
+      <div class="card">
+        <h3>${text[lang].who}</h3>
+        <button onclick="mijoz()">${text[lang].client}</button>
+        <button class="btn-outline" onclick="usta()">${text[lang].worker}</button>
+      </div>
+    `;
+  }
+
+  window.mijoz = () => {
+    let list = kasipler.map(k => `<button class="btn-outline" onclick="show('${k}')">${k}</button>`).join("");
+    document.getElementById("app").innerHTML = `
+      <div class="card">
+        <h3>${text[lang].choose}</h3>
+        <div style="max-height: 400px; overflow-y: auto;">${list}</div>
+        <button onclick="home()" class="btn-back">${text[lang].back}</button>
+      </div>
+    `;
+  }
+
+  window.show = (job) => {
+    let found = ustalar.filter(u => u.jobs && u.jobs.includes(job));
+    let html = `<h3>${job}</h3>`;
+    if (found.length === 0) {
+      html += `<p>${text[lang].notfound}</p>`;
+    } else {
+      found.forEach(u => {
+        let badges = u.jobs.map(j => `<span class="badge">${j}</span>`).join("");
+        html += `
+          <div class="card">
+            <h4>${u.name}</h4>
+            <div>${badges}</div>
+            <p><b>📞 ${u.phone}</b></p>
+            <div style="display:flex; gap:10px;">
+                <a href="tel:${u.phone}" style="flex:1;"><button style="margin:0;">📞 ${text[lang].call}</button></a>
+                <button onclick="oshiriw('${u.id}')" class="delete-btn">${text[lang].delete}</button>
+            </div>
+          </div>
+        `;
+      });
+    }
+    html += `<button onclick="mijoz()" class="btn-back">${text[lang].back}</button>`;
+    document.getElementById("app").innerHTML = html;
+  }
+
+  window.oshiriw = (id) => {
+    if(confirm("Bul ustanı óshiriwge isenimli misiz?")) {
+        remove(ref(db, `ustalar/${id}`))
+        .then(() => alert("Óshirildi"))
+        .catch(e => alert("Qátelik: " + e.message));
+    }
+  }
+
+  window.usta = () => {
+    let checkboxes = kasipler.map(k => `
+      <div class="checkbox-item">
+        <input type="checkbox" name="job" value="${k}" id="${k}">
+        <label for="${k}">${k}</label>
+      </div>
+    `).join("");
+    document.getElementById("app").innerHTML = `
+      <div class="card">
+        <h3>${text[lang].register}</h3>
+        <input id="uname" placeholder="${text[lang].name}" style="width:90%; padding:10px; margin-bottom:10px; border-radius:8px; border:1px solid #ccc;">
+        <p style="font-size:14px; text-align:left; font-weight:bold;">${text[lang].job}:</p>
+        <div class="checkbox-group">${checkboxes}</div>
+        <input id="uphone" type="tel" value="+998" style="width:90%; padding:10px; margin-bottom:10px; border-radius:8px; border:1px solid #ccc;">
+        <button onclick="save()">${text[lang].save}</button>
+        <button onclick="home()" class="btn-back">${text[lang].back}</button>
+      </div>
+    `;
+  }
+
+  window.save = () => {
+    let name = document.getElementById("uname").value;
+    let phone = document.getElementById("uphone").value;
+    let selectedJobs = Array.from(document.querySelectorAll('input[name="job"]:checked')).map(cb => cb.value);
+
+    if (!name || selectedJobs.length === 0 || phone.length < 13) {
+      alert("Maǵlıwmatlardı tolıq kiritiń! (Mısalı: +998901234567)");
+      return;
+    }
+
+    push(ref(db, 'ustalar'), {
+      name: name,
+      jobs: selectedJobs,
+      phone: phone
+    }).then(() => {
+      document.getElementById("app").innerHTML = `
+        <div class="card">
+          <h3>${text[lang].success}</h3>
+          <p>${text[lang].successDesc}</p>
+          <button onclick="home()">${text[lang].home}</button>
+        </div>
+      `;
+    }).catch((e) => alert("Qátelik: " + e.message));
+  }
+
+  home();
+</script>
+
+</body>
+</html>
