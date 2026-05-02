@@ -1,9 +1,12 @@
+html
 <!DOCTYPE html>
 <html lang="kaa">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>UstaTop PRO</title>
+  <!-- Telegram Web App Script -->
+  <script src="[https://telegram.org/js/telegram-web-app.js](https://telegram.org/js/telegram-web-app.js)"></script>
 
   <style>
     :root { --bg: #f4f7f6; --card-bg: #ffffff; --text: #2d3436; --primary: #0984e3; --secondary: #636e72; }
@@ -40,65 +43,59 @@
 </div>
 
 <script type="module">
-  
+  // Firebase SDK importı
+  import { initializeApp } from "[https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js](https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js)";
+  import { getDatabase, ref, push, onValue, remove } from "[https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js](https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js)";
 
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-
+  // Firebase sazlamaları
   const firebaseConfig = {
-    databaseURL: "https://ustataw-feea0-default-rtdb.firebaseio.com/" 
+    databaseURL: "[https://ustataw-feea0-default-rtdb.firebaseio.com/](https://ustataw-feea0-default-rtdb.firebaseio.com/)" 
   };
 
   const fbApp = initializeApp(firebaseConfig);
   const db = getDatabase(fbApp);
 
-  let lang = localStorage.getItem("appLang") || "kaa";
+  // Telegram WebApp obyektin alıw
+  const tg = window.Telegram.WebApp;
+  tg.expand(); // Ekrandı tolıq jayıw
+  let lang = localStorage.getItem("appLang")  "kaa";
   let ustalar = [];
 
+  // Bazadan maǵlıwmatlardı real-waqıtta alıw
   onValue(ref(db, 'ustalar'), (snapshot) => {
     const data = snapshot.val();
-    if (data) {
-      ustalar = Object.keys(data).map(key => ({
-        id: key,
-        ...data[key]
-      }));
-    } else {
-      ustalar = [];
-    }
+    ustalar = data ? Object.keys(data).map(key => ({ id: key, ...data[key] })) : [];
     home(); 
   });
 
   const kasipler = [
-      "Elektrik", "Santexnik", "Gipsokarton ustası", "Malyar", 
-      "Kafelshik", "Mebelshi", "Kondicioner ustası", 
-      "Suw filtri ustası", "Kir juwıw mashina ustası", 
-      "Shtukaturka (Sıwaq)", "Gaz ustası", "Internet ustası", "Tegislewshi (Styajka)"
+    "Elektrik", "Santexnik", "Gipsokarton ustası", "Malyar", 
+    "Kafelshik", "Mebelshi", "Kondicioner ustası", 
+    "Suw filtri ustası", "Kir juwıw mashina ustası", 
+    "Shtukaturka (Sıwaq)", "Gaz ustası", "Internet ustası", "Tegislewshi (Styajka)"
   ];
 
   const text = {
     kaa: {
       who: "Siz kimsiz?", client: "Mijoz (Usta izlew)", worker: "Ustaman (Dizimge jazılıw)",
       choose: "Kásipti saylań", call: "Qońıraw qılıw", register: "Usta bolıp dizimnen ótiw",
-      save: "Saqlaw", name: "Atıńız hám familiyańız", job: "Kásiplerińiz (bir neshe saylaw múmkin)", 
-      phone: "Telefon nomerińiz", notfound: "Bul kásip boyınsha usta tabılmadı 😕", back: "Arqaǵa",
-      success: "✅ Registraciya tamamlandı!", successDesc: "Raxmet, siz dizimge alındıńız.", home: "Bas betke",
-      delete: "🗑 Óshiriw"
+      save: "Saqlaw", name: "Atıńız hám familiyańız", job: "Kásiplerińiz (bir neshe)", 
+      phone: "Telefon nomerińiz", notfound: "Usta tabılmadı 😕", back: "Arqaǵa",
+      success: "✅ Registraciya tamamlandı!", home: "Bas betke", delete: "🗑 Óshiriw"
     },
     uz: {
       who: "Siz kimsiz?", client: "Mijoz (Usta izlash)", worker: "Ustaman (Ro'yxatdan o'tish)",
       choose: "Kasbni tanlang", call: "Qo'ng'iroq qilish", register: "Usta sifatida ro'yxatdan o'tish",
-      save: "Saqlash", name: "Ism va familiyangiz", job: "Kasblaringiz (bir nechta tanlash mumkin)", 
+      save: "Saqlash", name: "Ism va familiyangiz", job: "Kasblaringiz (bir nechta)", 
       phone: "Telefon raqamingiz", notfound: "Usta topilmadi 😕", back: "Orqaga",
-      success: "✅ Ro'yxatdan o'tdingiz!", successDesc: "Rahmat, ma'lumotlaringiz saqlandi.", home: "Bosh sahifa",
-      delete: "🗑 O'chirish"
+      success: "✅ Ro'yxatdan o'tdingiz!", home: "Bosh sahifa", delete: "🗑 O'chirish"
     },
     ru: {
       who: "Кто вы?", client: "Я клиент (Ищу мастера)", worker: "Я мастер (Регистрация)",
       choose: "Выберите услугу", call: "Позвонить", register: "Регистрация мастера",
-      save: "Сохранить", name: "Ваше имя и фамилия", job: "Ваши навыки (можно несколько)", 
-      phone: "Номер телефона", notfound: "Мастера по этой специальности не найдены 😕", back: "Назад",
-      success: "✅ Регистрация завершена!", successDesc: "Спасибо, вы успешно добавлены в базу.", home: "На главную",
-      delete: "🗑 Удалить"
+      save: "Сохранить", name: "Ваше имя и фамилия", job: "Ваши навыки", 
+      phone: "Номер телефона", notfound: "Мастера не найдены 😕", back: "Назад",
+      success: "✅ Регистрация завершена!", home: "На главную", delete: "🗑 Удалить"
     }
   };
 
@@ -152,17 +149,15 @@
   }
 
   window.oshiriw = (id) => {
-    if(confirm("Bul ustanı óshiriwge isenimli misiz?")) {
-        remove(ref(db, `ustalar/${id}`))
-        .then(() => alert("Óshirildi"))
-        .catch(e => alert("Qátelik: " + e.message));
+    if(confirm("Óshiriwge isenimli misiz?")) {
+        remove(ref(db, `ustalar/${id}`)).then(() => tg.HapticFeedback.notificationOccurred('success'));
     }
   }
 
   window.usta = () => {
     let checkboxes = kasipler.map(k => `
       <div class="checkbox-item">
-        <input type="checkbox" name="job" value="${k}" id="${k}">
+      <input type="checkbox" name="job" value="${k}" id="${k}">
         <label for="${k}">${k}</label>
       </div>
     `).join("");
@@ -184,28 +179,24 @@
     let phone = document.getElementById("uphone").value;
     let selectedJobs = Array.from(document.querySelectorAll('input[name="job"]:checked')).map(cb => cb.value);
 
-    if (!name || selectedJobs.length === 0 || phone.length < 13) {
-      alert("Maǵlıwmatlardı tolıq kiritiń! (Mısalı: +998901234567)");
+    if (!name  selectedJobs.length === 0 || phone.length < 13) {
+      alert("Maǵlıwmatlardı tolıq kiritiń!");
       return;
     }
 
-    push(ref(db, 'ustalar'), {
-      name: name,
-      jobs: selectedJobs,
-      phone: phone
-    }).then(() => {
+    push(ref(db, 'ustalar'), { name, jobs: selectedJobs, phone })
+    .then(() => {
+      tg.HapticFeedback.notificationOccurred('success');
       document.getElementById("app").innerHTML = `
         <div class="card">
           <h3>${text[lang].success}</h3>
-          <p>${text[lang].successDesc}</p>
           <button onclick="home()">${text[lang].home}</button>
         </div>
       `;
-    }).catch((e) => alert("Qátelik: " + e.message));
+    });
   }
 
   home();
 </script>
-
 </body>
 </html>
