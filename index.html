@@ -40,11 +40,14 @@
 </div>
 
 <script type="module">
-  // FIREBASE JALǴAW
+  // Xabar shıģarıw bólimi (Siz soraģan jer)
+  window.onload = () => {
+      alert("Assalawma alekum Xush kelibsiz!");
+  };
+
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
   import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-  // Sizdiń Firebase mánzilińiz
   const firebaseConfig = {
     databaseURL: "https://ustataw-feea0-default-rtdb.firebaseio.com/" 
   };
@@ -55,11 +58,9 @@
   let lang = localStorage.getItem("appLang") || "kaa";
   let ustalar = [];
 
-  // BAZADAN MAǴLIWMATLARDI ALIW
   onValue(ref(db, 'ustalar'), (snapshot) => {
     const data = snapshot.val();
     if (data) {
-      // ID-leri menen birge júklew (óshiriw ushın kerek)
       ustalar = Object.keys(data).map(key => ({
         id: key,
         ...data[key]
